@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="zh-TW" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2026 Home Lab 實戰指南：從零打造 OMV 8 存儲中心</title>
+    <script src="https://cdn.tailwindcss.org"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Noto Sans TC', sans-serif; 
+            background-color: #020617; 
+            color: #f1f5f9;
+            line-height: 1.8;
+        }
+        .hero-gradient {
+            background: radial-gradient(circle at 50% 50%, rgba(6, 182, 212, 0.15) 0%, transparent 50%);
+        }
+        .card-bg {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(51, 65, 85, 0.5);
+        }
+        .code-block {
+            background: #000000;
+            border: 1px solid #1e293b;
+            border-radius: 12px;
+            padding: 1.5rem;
+            position: relative;
+        }
+        .step-label {
+            background: #06b6d4;
+            color: #000;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 900;
+            font-size: 0.7rem;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+        .copy-btn {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            padding: 4px 10px;
+            background: #1e293b;
+            font-size: 0.7rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .copy-btn:hover {
+            background: #334155;
+            color: #06b6d4;
+        }
+        .info-box {
+            border-left: 4px solid #3b82f6;
+            background: rgba(59, 130, 246, 0.05);
+        }
+        .warning-box {
+            border-left: 4px solid #f59e0b;
+            background: rgba(245, 158, 11, 0.05);
+        }
+        input[type="checkbox"]:checked + span {
+            text-decoration: line-through;
+            color: #64748b;
+        }
+    </style>
+</head>
+<body class="hero-gradient min-h-screen">
+
+    <!-- Header / Navigation -->
+    <nav class="sticky top-0 z-50 bg-slate-950/80 backdrop-blur-md border-b border-slate-800">
+        <div class="max-w-5xl mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="text-xl font-black tracking-tighter italic">HOME<span class="text-cyan-400">LAB.</span>2026</div>
+            <div class="hidden md:flex space-x-8 text-sm font-medium text-slate-400">
+                <a href="#concept" class="hover:text-cyan-400 transition">架構思維</a>
+                <a href="#download" class="hover:text-cyan-400 transition">工具下載</a>
+                <a href="#vpn" class="hover:text-cyan-400 transition">網路設定</a>
+                <a href="#command" class="hover:text-cyan-400 transition">實戰指令</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="py-24 px-6 max-w-5xl mx-auto text-center">
+        <h1 class="text-5xl md:text-7xl font-black mb-8 leading-tight tracking-tight text-white">
+            打造穩定的 <br><span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">家用數位堡壘</span>
+        </h1>
+        <p class="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto mb-10">
+            針對 N100 主機與 UGREEN DXP4800 量身打造。這是一份不講廢話、照著執行就能成功的 OMV 8 部署指南。
+        </p>
+        <div class="flex flex-wrap justify-center gap-4">
+            <a href="#command" class="bg-cyan-500 hover:bg-cyan-400 text-black px-8 py-3 rounded-full font-bold transition">立即開始部署</a>
+            <a href="#vpn" class="border border-slate-700 hover:bg-slate-800 px-8 py-3 rounded-full font-bold transition">設定遠端 VPN</a>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-6 pb-32">
+
+        <!-- 1. 核心思維 -->
+        <section id="concept" class="mb-24 scroll-mt-24">
+            <h2 class="text-2xl font-bold mb-10 flex items-center">
+                <span class="text-cyan-500 mr-3">01 /</span> 核心規劃思維
+            </h2>
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="card-bg p-8 rounded-2xl">
+                    <div class="w-12 h-12 bg-cyan-500/20 text-cyan-400 rounded-lg flex items-center justify-center mb-6">
+                        <i class="fas fa-layer-group text-xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-4">OS 與資料徹底分離</h3>
+                    <p class="text-slate-400 text-sm">
+                        不要將作業系統裝在大容量硬碟中。使用獨立的 SSD 作為系統盤，這意味著即使系統崩潰重裝，你的硬碟陣列資料依然紋絲不動。
+                    </p>
+                </div>
+                <div class="card-bg p-8 rounded-2xl">
+                    <div class="w-12 h-12 bg-blue-500/20 text-blue-400 rounded-lg flex items-center justify-center mb-6">
+                        <i class="fas fa-network-wired text-xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-4">運算與儲存分工</h3>
+                    <p class="text-slate-400 text-sm">
+                        N100 主機負責 24/7 的輕量運算與網路管理（如 VPN）；UGREEN DXP4800 則專職穩定的大容量存儲，將職責切分才能達到最長久的穩定。
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. 下載中心 -->
+        <section id="download" class="mb-24 scroll-mt-24">
+            <h2 class="text-2xl font-bold mb-10 flex items-center text-white">
+                <span class="text-cyan-500 mr-3">02 /</span> 下載中心
+            </h2>
+            <p class="text-slate-400 mb-8 font-medium">請根據教學階段下載對應的資源，不需再自行去官網篩選版本：</p>
+            
+            <div class="space-y-4">
+                <!-- PC -->
+                <div class="flex flex-col md:flex-row md:items-center justify-between p-6 card-bg rounded-xl gap-4 hover:border-cyan-500/50 transition">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-10 h-10 bg-slate-800 rounded-full flex items-center justify-center text-lg italic font-black">OS</div>
+                        <div>
+                            <div class="font-bold">OpenMediaVault 8.0 ISO</div>
+                            <div class="text-xs text-slate-500">穩定版鏡像 (2026 Stable)</div>
+                        </div>
+                    </div>
+                    <a href="https://github.com/openmediavault/openmediavault/releases/download/8.0/openmediavault_8.0-amd64.iso" class="px-6 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm font-bold text-cyan-400 text-center">直接下載</a>
+                </div>
+
+                <div class="flex flex-col md:flex-row md:items-center justify-between p-6 card-bg rounded-xl gap-4 hover:border-cyan-500/50 transition">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-10 h-10 bg-slate-800 rounded-full flex items-center justify-center text-lg italic font-black">USB</div>
+                        <div>
+                            <div class="font-bold">Ventoy</div>
+                            <div class="text-xs text-slate-500">多合一開機製作工具 (Windows版)</div>
+                        </div>
+                    </div>
+                    <a href="https://github.com/ventoy/Ventoy/releases/download/v1.0.99/ventoy-1.0.99-windows.zip" class="px-6 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm font-bold text-white text-center">前往 Release</a>
+                </div>
+
+                <!-- iOS -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
+                    <a href="https://apps.apple.com/tw/app/wireguard/id1441195209" target="_blank" class="flex items-center p-4 card-bg rounded-xl border border-blue-900/30 hover:bg-blue-900/10">
+                        <i class="fab fa-apple text-3xl mr-4 text-slate-300"></i>
+                        <div class="text-left">
+                            <div class="text-xs text-slate-500 font-bold">iOS 台灣版</div>
+                            <div class="text-sm font-bold">WireGuard</div>
+                        </div>
+                    </a>
+                    <a href="https://apps.apple.com/tw/app/unifi/id1057750338" target="_blank" class="flex items-center p-4 card-bg rounded-xl border border-slate-700 hover:bg-slate-800">
+                        <i class="fab fa-apple text-3xl mr-4 text-slate-300"></i>
+                        <div class="text-left">
+                            <div class="text-xs text-slate-500 font-bold">iOS 台灣版</div>
+                            <div class="text-sm font-bold">UniFi 管理</div>
+                        </div>
+                    </a>
+                    <a href="https://apps.apple.com/tw/app/termius-terminal-ssh-client/id549039913" target="_blank" class="flex items-center p-4 card-bg rounded-xl border border-slate-700 hover:bg-slate-800">
+                        <i class="fab fa-apple text-3xl mr-4 text-slate-300"></i>
+                        <div class="text-left">
+                            <div class="text-xs text-slate-500 font-bold">iOS 台灣版</div>
+                            <div class="text-sm font-bold">Termius SSH</div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. VPN 設定 -->
+        <section id="vpn" class="mb-24 scroll-mt-24">
+            <h2 class="text-2xl font-bold mb-10 flex items-center text-white">
+                <span class="text-cyan-500 mr-3">03 /</span> 網路先行：UniFi VPN
+            </h2>
+            <div class="info-box p-6 rounded-xl mb-10">
+                <h4 class="font-bold text-blue-400 mb-2 underline underline-offset-4">為什麼重要？</h4>
+                <p class="text-sm text-slate-300">
+                    在部署 NAS 的過程中，你可能會出門或遠離主機。先架設好 VPN，確保即使你不在主機旁，也能隨時通過 iPhone 連入內網進行 SSH 救援。
+                </p>
+            </div>
+
+            <div class="space-y-12">
+                <div class="flex items-start">
+                    <div class="w-8 h-8 rounded bg-cyan-500 text-black flex items-center justify-center font-black flex-none mt-1">1</div>
+                    <div class="ml-6">
+                        <h4 class="font-bold mb-3">UniFi 控制台設定</h4>
+                        <p class="text-sm text-slate-400 mb-4">
+                            進入 Settings > Teleport & VPN > VPN Server > Create New (WireGuard)。<br>
+                            監聽埠固定為 <strong>51820 (UDP)</strong>。
+                        </p>
+                    </div>
+                </div>
+
+                <div class="flex items-start">
+                    <div class="w-8 h-8 rounded bg-cyan-500 text-black flex items-center justify-center font-black flex-none mt-1">2</div>
+                    <div class="ml-6">
+                        <h4 class="font-bold mb-3"> AllowedIPs 選項思維</h4>
+                        <p class="text-sm text-slate-400 mb-6">
+                            這是新手最容易出錯的地方。根據你的需求修改設定：
+                        </p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="p-4 bg-slate-900 rounded-lg border border-slate-800">
+                                <div class="text-[10px] uppercase font-bold text-cyan-400 tracking-widest mb-1">模式 A：全流量轉發 (翻牆)</div>
+                                <code class="text-xs font-mono">AllowedIPs = 0.0.0.0/0</code>
+                                <p class="text-[10px] text-slate-500 mt-2">手機所有上網流量都會經過家裡主機。</p>
+                            </div>
+                            <div class="p-4 bg-slate-900 rounded-lg border border-slate-800">
+                                <div class="text-[10px] uppercase font-bold text-blue-400 tracking-widest mb-1">模式 B：僅存取家裡內網</div>
+                                <code class="text-xs font-mono">AllowedIPs = 192.168.1.0/24, 192.168.10.0/24</code>
+                                <p class="text-[10px] text-slate-500 mt-2">手機只有連內網設備時才走 VPN。</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. 指令集 -->
+        <section id="command" class="mb-24 scroll-mt-24">
+            <h2 class="text-2xl font-bold mb-10 flex items-center text-white">
+                <span class="text-cyan-500 mr-3">04 /</span> 實戰初始化指令
+            </h2>
+            <p class="text-slate-400 mb-10">當你完成 OMV 8 系統安裝後，請透過 SSH 依序貼上以下指令進行優化：</p>
+
+            <div class="space-y-16">
+                <!-- cmd 1 -->
+                <div>
+                    <h4 class="font-bold mb-4 text-white flex items-center">
+                        <span class="step-label">Step 1</span> 系統升級與 OMV-Extras
+                    </h4>
+                    <p class="text-sm text-slate-500 mb-4">這是開啟 Docker 功能的關鍵步驟。</p>
+                    <div class="code-block">
+                        <div class="copy-btn" onclick="copyCode('code-1')"><i class="far fa-copy mr-1"></i> COPY</div>
+                        <pre id="code-1" class="text-sm text-cyan-300 font-mono overflow-x-auto leading-relaxed"><code># 更新源並升級系統
+sudo omv-upgrade
+
+# 安裝社群外掛腳本 (OMV-Extras)
+wget -O - https://github.com/OpenMediaVault-Plugin-Developers/installScript/raw/master/install | sudo bash</code></pre>
+                    </div>
+                </div>
+
+                <!-- cmd 2 -->
+                <div>
+                    <h4 class="font-bold mb-4 text-white flex items-center">
+                        <span class="step-label">Step 2</span> 修正 Postfix 報錯
+                    </h4>
+                    <p class="text-sm text-slate-500 mb-4">針對 OMV 8 常見的郵件服務卡關，執行強制部署：</p>
+                    <div class="code-block">
+                        <div class="copy-btn" onclick="copyCode('code-2')"><i class="far fa-copy mr-1"></i> COPY</div>
+                        <pre id="code-2" class="text-sm text-orange-300 font-mono overflow-x-auto"><code>sudo omv-salt deploy run postfix</code></pre>
+                    </div>
+                </div>
+
+                <!-- cmd 3 -->
+                <div>
+                    <h4 class="font-bold mb-4 text-white flex items-center">
+                        <span class="step-label">Step 3</span> 硬碟規劃與權限自動化
+                    </h4>
+                    <div class="warning-box p-4 rounded-lg mb-4">
+                        <p class="text-xs text-amber-500 font-medium italic">
+                            ! 注意：指令中的 <code class="bg-amber-500/10 px-1">/srv/data</code> 應換成你實際在 OMV 掛載的 UUID 路徑。
+                        </p>
+                    </div>
+                    <div class="code-block">
+                        <div class="copy-btn" onclick="copyCode('code-3')"><i class="far fa-copy mr-1"></i> COPY</div>
+                        <pre id="code-3" class="text-sm text-emerald-300 font-mono overflow-x-auto leading-relaxed"><code># 建立種子下載與媒體庫目錄
+mkdir -p /srv/data/torrent/{watch,incomplete,complete}
+mkdir -p /srv/data/{media,backup}
+
+# 一次性修正權限：確保 Docker 與 SMB 都能正常寫入
+chown -R root:users /srv/data
+chmod -R 2775 /srv/data</code></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. 驗收清單 -->
+        <section id="verify" class="mb-24 scroll-mt-24">
+            <div class="bg-slate-900 border border-slate-700 p-10 rounded-3xl shadow-2xl">
+                <h3 class="text-3xl font-black mb-10 text-center">最終驗收 Checklist</h3>
+                <div class="space-y-4">
+                    <label class="flex items-center p-5 card-bg rounded-2xl cursor-pointer hover:bg-slate-800 transition">
+                        <input type="checkbox" class="w-6 h-6 rounded border-slate-700 text-cyan-500 focus:ring-cyan-500 mr-6">
+                        <span class="font-medium">iPhone 關閉 Wi-Fi，能連上 WireGuard 並打入 OMV 管理頁面</span>
+                    </label>
+                    <label class="flex items-center p-5 card-bg rounded-2xl cursor-pointer hover:bg-slate-800 transition">
+                        <input type="checkbox" class="w-6 h-6 rounded border-slate-700 text-cyan-500 focus:ring-cyan-500 mr-6">
+                        <span class="font-medium">執行指令 <code>systemctl status postfix</code> 狀態為綠色 Active</span>
+                    </label>
+                    <label class="flex items-center p-5 card-bg rounded-2xl cursor-pointer hover:bg-slate-800 transition">
+                        <input type="checkbox" class="w-6 h-6 rounded border-slate-700 text-cyan-500 focus:ring-cyan-500 mr-6">
+                        <span class="font-medium">OMV 儀表板中的硬碟狀態顯示「線上」且檔案系統已掛載</span>
+                    </label>
+                    <label class="flex items-center p-5 card-bg rounded-2xl cursor-pointer hover:bg-slate-800 transition">
+                        <input type="checkbox" class="w-6 h-6 rounded border-slate-700 text-cyan-500 focus:ring-cyan-500 mr-6">
+                        <span class="font-medium">iPhone 的「檔案」App 可透過 IP 搜尋到 SMB 分享目錄</span>
+                    </label>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="py-16 bg-slate-950 border-t border-slate-900 text-center">
+        <div class="mb-6 font-black italic text-2xl tracking-tighter">HOME<span class="text-cyan-400">LAB.</span></div>
+        <p class="text-slate-500 text-sm mb-2 italic">這不僅是一台服務器，這是你的數位家園。</p>
+        <p class="text-slate-700 text-xs">© 2026 Home Lab 教學站 | 適用於 Debian 12 & OMV 8 系列</p>
+    </footer>
+
+    <script>
+        function copyCode(id) {
+            const code = document.getElementById(id).innerText;
+            const temp = document.createElement('textarea');
+            temp.value = code;
+            document.body.appendChild(temp);
+            temp.select();
+            document.execCommand('copy');
+            document.body.removeChild(temp);
+
+            const btn = event.target;
+            const original = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-check text-emerald-500 mr-1"></i> COPIED!';
+            btn.style.color = '#10b981';
+            
+            setTimeout(() => {
+                btn.innerHTML = original;
+                btn.style.color = '';
+            }, 2000);
+        }
+    </script>
+</body>
+</html>
+
